@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/globals.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/styleguide.css" />
+
+  <title>Product Review List</title>
+
+  <style>
+    .avg-stars { display: inline-flex; gap: 0.15rem; vertical-align: middle; }
+    .avg-star { position: relative; display: inline-block; width: 1em; height: 1em; line-height: 1em; }
+    .avg-star > i { position: absolute; inset: 0; line-height: 1em; }
+    .avg-star-fill { position: absolute; inset: 0; overflow: hidden; width: 0%; }
+    .avg-star-fill i { position: absolute; inset: 0; line-height: 1em; }
+  </style>
+</head>
+<body>
+  <div class="prl-wrapper" data-product-id="<%= product ? product.id : '' %>" data-user-id="<%= user ? user.id : '' %>" data-user-role="<%= user ? user.role : '' %>" data-user-name="<%= user ? (user.fullname || user.username || '') : '' %>">
+    <!-- HEADER (NAVBAR) -->
+<nav class="navbar navbar-expand-lg bg-light border-bottom py-3">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">Ecommerce</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div id="navMenu" class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto ms-4 gap-3">
+        <li class="nav-item"><a class="nav-link" href="/shop">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/shop">Shop</a></li>
+        <li class="nav-item"><a class="nav-link" href="/blogs">Blogs</a></li>
+        <li class="nav-item"><a class="nav-link" href="/forum">Forum</a></li>
+        <li class="nav-item"><a class="nav-link" href="/sitemap">Sitemap</a></li>
+      </ul>
+      <form class="d-flex me-3">
+        <input class="form-control" type="search" placeholder="Search products">
+      </form>
+      
+      <a href="/cart" class="me-3 text-dark">
+        <i class="fa-solid fa-bag-shopping fs-5"></i>
+      </a>
+
+      <div class="dropdown">
+        <a href="#" class="text-dark" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa-regular fa-user fs-5"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <% if (!user) { %>
+            <li><a class="dropdown-item" href="/login">Login</a></li>
+            <li><a class="dropdown-item" href="/register">Register</a></li>
+          <% } else { %>
+            <li><a class="dropdown-item" href="/account">My Account</a></li>
+            <% if (user.role === 'admin') { %>
+            <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
+            <% } %>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
+  <!-- BREADCRUMB -->
+  <nav class="bg-light py-2 border-bottom">
+    <div class="container">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+        <li class="breadcrumb-item active"><%= product ? product.name : 'Product' %></li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- PRODUCT DETAIL SECTION -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-5">
+        <!-- Product Images -->
+        <div class="col-md-5">
+          <div class="card">
+            <img src="<%= (product && product.images && product.images[0]) ? product.images[0] : '/img/placeholder.png' %>" class="card-img-top" alt="Product Image" style="height: 420px; object-fit: contain;">
+          </div>
+        </div>
+        <!-- Product Info -->
+        <div class="col-md-7">
+          <h2 class="fw-bold mb-3"><%= product ? product.name : 'Product' %></h2>
+          <div class="mb-2">
+            <% const avg = (typeof avgRating === 'number') ? avgRating : 0; %>
+            <% const count = (typeof reviewCount === 'number') ? reviewCount : (Array.isArray(reviews) ? reviews.length : 0); %>
+            <span class="avg-stars" aria-label="<%= avg.toFixed(1) %> out of 5">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <% const frac = Math.max(0, Math.min(1, avg - (i - 1))); %>
+                <% const fillPct = frac * 100; %>
+                <span class="avg-star">
+                  <i class="fa-regular fa-star text-warning"></i>
+                  <span class="avg-star-fill" data-fill="<%= fillPct %>">
+                    <i class="fa-solid fa-star text-warning"></i>
+                  </span>
+                </span>
+              <% } %>
+            </span>
+            <span class="ms-2 text-muted">(<%= count %> reviews)</span>
+          </div>
+          <div class="mb-3">
+            <span class="fs-4 fw-bold text-danger">$<%= (product && typeof product.price === 'number') ? product.price.toFixed(2) : '0.00' %></span>
+            <% if (product && typeof product.oldPrice === 'number' && product.oldPrice > product.price) { %>
+              <span class="text-muted text-decoration-line-through ms-2">$<%= product.oldPrice.toFixed(2) %></span>
+              <span class="badge bg-success ms-2"><%= Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) %>% OFF</span>
+            <% } %>
+          </div>
+          <form class="row g-3 mb-4" action="/add-to-cart" method="POST">
+            <input type="hidden" name="productId" value="<%= product ? product.id : '' %>"> 
+            <div class="col-6">
+              <label class="form-label">Size</label>
+              <select class="form-select" name="size">
+                <% (product && Array.isArray(product.sizes) ? product.sizes : [39,40,41,42]).forEach(function(s) { %>
+                  <option value="<%= s %>"><%= s %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Quantity</label>
+              <input type="number" class="form-control" name="quantity" value="1" min="1">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-dark w-100">
+                <i class="fa-solid fa-cart-plus me-2"></i>Add to Cart
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- PRODUCT TABS -->
+<section class="border-top py-4">
+  <div class="container">
+    <ul class="nav nav-tabs mb-3" id="productTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">Product Details</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">Rating & Reviews</button>
+      </li>
+    </ul>
+    <div class="tab-content" id="productTabContent">
+      <div class="tab-pane fade" id="details" role="tabpanel">
+        <p><%= (product && product.description) ? product.description : 'Product details are coming soon.' %></p>
+      </div>
+      <div class="tab-pane fade show active" id="reviews" role="tabpanel">
+        <!-- REVIEW SECTION-->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">All Reviews <span class="text-muted">(<%= (typeof reviewCount === 'number') ? reviewCount : 0 %>)</span></h4>
+          <div>
+            <% if (user) { %>
+              <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#reviewForm" aria-expanded="false" aria-controls="reviewForm">
+                Write a Review
+              </button>
+            <% } else { %>
+              <a class="btn btn-outline-primary btn-sm" href="/login">Log in to write a review</a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Write a Review Form (collapsible) -->
+        <div class="collapse mb-4" id="reviewForm">
+          <div class="card card-body">
+            <% if (user) { %>
+            <form id="reviewSubmitForm">
+              <input type="hidden" name="productId" value="<%= product ? product.id : '' %>">
+              <div class="mb-3">
+                <label class="form-label">Review Title</label>
+                <input type="text" class="form-control" name="title" placeholder="Enter review title">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3" placeholder="Write your review"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Star Rating</label>
+                <select class="form-select" name="rating" required>
+                  <option value="" selected disabled hidden>Select rating</option>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Size</label>
+                <select class="form-select" name="size" required>
+                  <option value="" selected disabled hidden>Select size</option>
+                  <option value="39">39</option>
+                  <option value="40">40</option>
+                  <option value="41">41</option>
+                  <option value="42">42</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-control" name="name" placeholder="Enter your name">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Date Added</label>
+                <input type="date" class="form-control" name="date" style="color: #888;">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Image (optional)</label>
+                <input type="file" class="form-control" name="image">
+              </div>
+              <button type="submit" class="btn btn-dark">Submit Review</button>
+            </form>
+            <% } else { %>
+              <div class="text-muted">Please <a href="/login">log in</a> to write a review.</div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Review Controls -->
+        <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+          <input id="reviewSearch" class="form-control w-auto" style="min-width:200px" type="text" placeholder="Search reviews...">
+          <select id="reviewSort" class="form-select w-auto">
+            <option value="date-desc">Newest</option>
+            <option value="date-asc">Oldest</option>
+            <option value="rating-desc">Highest Rating</option>
+            <option value="rating-asc">Lowest Rating</option>
+          </select>
+          <select id="reviewFilter" class="form-select w-auto">
+            <option value="all">All Ratings</option>
+            <option value="5">5 Stars</option>
+            <option value="4">4 Stars</option>
+            <option value="3">3 Stars</option>
+            <option value="2">2 Stars</option>
+            <option value="1">1 Star</option>
+          </select>
+        </div>
+        <!-- Review List/Detail Container -->
+        <div id="reviewList" class="row g-4"></div>
+        <div id="reviewDetail" class="d-none"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- RELATED PRODUCTS -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <h4 class="mb-4">You Might Also Like</h4>
+    <div class="row g-4">
+      <% (relatedProducts || []).forEach(function(rp) { %>
+        <div class="col-6 col-md-3">
+          <a class="text-decoration-none text-dark" href="/product?id=<%= rp.id %>">
+            <div class="card h-100">
+              <img src="<%= rp.image %>" class="card-img-top" alt="Related Product">
+              <div class="card-body">
+                <h6 class="card-title"><%= rp.name %></h6>
+                <div>
+                  <span class="fw-bold">$<%= Number(rp.price || 0).toFixed(2) %></span>
+                  <% if (typeof rp.oldPrice === 'number' && rp.oldPrice > rp.price) { %>
+                    <span class="text-muted text-decoration-line-through ms-2">$<%= rp.oldPrice.toFixed(2) %></span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      <% }) %>
+      <!-- Add more product cards as needed, all inside this single row -->
+    </div>
+  </div>
+</section>
+  <!-- FOOTER -->
+  <footer class="bg-light pt-5 mt-5">
+    <div class="container">
+      <div class="row">
+        <!-- Column 1: Logo + Social -->
+        <div class="col-md-3 mb-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="p-2 border rounded"><i class="fa-solid fa-store fs-3"></i></div>
+            <span class="fw-bold fs-5">Ecommerce</span>
+          </div>
+          <p class="text-muted small">DevCut is a YouTube channel for practical project-based learning.</p>
+          <div class="d-flex gap-2 mt-2">
+            <i class="fab fa-github fs-5"></i>
+            <i class="fab fa-instagram fs-5"></i>
+            <i class="fab fa-youtube fs-5"></i>
+          </div>
+        </div>
+        <!-- Column 2: Shop -->
+        <div class="col-md-2 mb-4">
+          <h6 class="text-muted">SHOP</h6>
+          <ul class="list-unstyled mt-2">
+            <li><a href="#" class="text-decoration-none text-dark">My Account</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Checkout</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Cart</a></li>
+          </ul>
+        </div>
+        <!-- Column 3: Company -->
+        <div class="col-md-2 mb-4">
+          <h6 class="text-muted">COMPANY</h6>
+          <ul class="list-unstyled mt-2">
+            <li><a href="#" class="text-decoration-none text-dark">About us</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Contact</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Careers</a></li>
+          </ul>
+        </div>
+        <!-- Column 4: Support -->
+        <div class="col-md-2 mb-4">
+          <h6 class="text-muted">SUPPORT</h6>
+          <ul class="list-unstyled mt-2">
+            <li><a href="#" class="text-decoration-none text-dark">FAQ</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Terms of use</a></li>
+            <li><a href="#" class="text-decoration-none text-dark">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <!-- Column 5: Payments -->
+        <div class="col-md-3 mb-4">
+          <h6 class="text-muted">ACCEPTED PAYMENTS</h6>
+          <div class="d-flex gap-2 mt-2">
+            <i class="fa-brands fa-cc-visa fs-3"></i>
+            <i class="fa-brands fa-cc-mastercard fs-3"></i>
+            <i class="fa-brands fa-cc-amex fs-3"></i>
+            <i class="fa-brands fa-cc-paypal fs-3"></i>
+          </div>
+        </div>
+      </div>
+      <hr class="mt-4">
+      <div class="text-center pb-3 small text-muted">
+        © 2025 Ecommerce. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // --- Web Storage API for Review Form Persistence ---
+  document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.querySelector('#reviewForm form');
+    if (!reviewForm) return;
+
+    const STORAGE_KEY = 'reviewFormDraft';
+
+    // Save form data to localStorage
+    function saveFormData() {
+      const data = {};
+      Array.from(reviewForm.elements).forEach(el => {
+        if (el.name || el.type === 'file') {
+          if (el.type === 'file') return; // Don't store files
+          data[el.name || el.previousElementSibling?.textContent.trim()] = el.value;
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // Load form data from localStorage
+    function loadFormData() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      Array.from(reviewForm.elements).forEach(el => {
+        if (el.name || el.type === 'file') {
+          if (el.type === 'file') return;
+          const key = el.name || el.previousElementSibling?.textContent.trim();
+          if (data[key]) el.value = data[key];
+        }
+      });
+    }
+
+    // Clear form data from localStorage on submit
+    reviewForm.addEventListener('submit', function() {
+      localStorage.removeItem(STORAGE_KEY);
+    });
+
+    // Save on input/change
+    Array.from(reviewForm.elements).forEach(el => {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+        el.addEventListener('input', saveFormData);
+        el.addEventListener('change', saveFormData);
+      }
+    });
+
+    // Load on page load
+    loadFormData();
+  });
+  </script>
+
+  <script id="reviewsData" type="application/json"><%- JSON.stringify(reviews || []) %></script>
+
+  <script>
+  // Current user (for review edit/delete permissions)
+  const wrapperEl = document.querySelector('.prl-wrapper');
+  const rawUserId = wrapperEl?.dataset?.userId;
+  const currentProductId = wrapperEl?.dataset?.productId || null;
+  window.currentUserId = rawUserId || null;
+  window.currentUserIsAdmin = wrapperEl?.dataset?.userRole === 'admin';
+  window.currentUserName = wrapperEl?.dataset?.userName || null;
+
+  // Apply partial-fill widths for average stars
+  document.querySelectorAll('.avg-star-fill[data-fill]').forEach(el => {
+    const pct = Number(el.dataset.fill);
+    if (Number.isFinite(pct)) el.style.width = `${pct}%`;
+  });
+
+  // --- Review Submission Handler ---
+  document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.getElementById('reviewSubmitForm');
+    if (!reviewForm) return;
+    reviewForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (typeof window.validateReviewForm === 'function') {
+        const ok = window.validateReviewForm();
+        if (!ok) return;
+      }
+
+      const formData = new FormData(reviewForm);
+      const data = Object.fromEntries(formData.entries());
+      // Normalize rating to number
+      if (data.rating) data.rating = parseInt(data.rating, 10);
+      // Remove image for now (not supported in backend)
+      delete data.image;
+
+      try {
+        const res = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert('Error: ' + (err.errors ? err.errors.join('\n') : err.error || 'Unknown error'));
+          return;
+        }
+
+        // Success: reload reviews from backend
+        await loadAndRenderReviews();
+        reviewForm.reset();
+        alert('Review submitted successfully!');
+        // Optionally collapse the form
+        const collapse = document.getElementById('reviewForm');
+        if (collapse && typeof bootstrap !== 'undefined') {
+          const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
+          bsCollapse.hide();
+        }
+      } catch (err) {
+        alert('Error submitting review.');
+      }
+    });
+  });
+
+  // --- Load and Render Reviews from API ---
+  async function loadAndRenderReviews() {
+    try {
+      const url = currentProductId ? `/api/reviews?productId=${encodeURIComponent(currentProductId)}` : '/api/reviews';
+      const res = await fetch(url);
+      const reviews = await res.json();
+      window.reviews = reviews;
+      updateReviewList();
+    } catch (err) {
+      // fallback: do nothing
+    }
+  }
+  // --- Review Data (from server) ---
+  window.reviews = JSON.parse(document.getElementById('reviewsData')?.textContent || '[]');
+
+  // --- Render Functions ---
+  function renderStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        html += `<i class="fa-solid fa-star text-warning"></i>`;
+      } else {
+        html += `<i class="fa-regular fa-star text-warning"></i>`;
+      }
+    }
+    return html;
+  }
+
+  function renderReviewList(list) {
+    const container = document.getElementById('reviewList');
+    container.innerHTML = '';
+    if (!list.length) {
+      container.innerHTML = '<div class="col-12 text-center text-muted">No reviews found.</div>';
+      return;
+    }
+    list.forEach(r => {
+      container.innerHTML += `
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 review-preview" data-id="${r.id}" style="cursor:pointer;">
+            ${r.thumbnail ? `<img src="${r.thumbnail}" class="card-img-top" alt="Review Thumbnail" style="height:180px;object-fit:cover;">` : ''}
+            <div class="card-body">
+              <div class="mb-2">${renderStars(r.rating)}</div>
+              <h6 class="fw-bold mb-1">${r.name}</h6>
+              <p class="text-muted small mb-1">${new Date(r.date).toLocaleDateString()}</p>
+              <h6 class="fw-bold mb-1">${r.title}</h6>
+              <p class="mb-0">${r.summary}</p>
+              ${r.size ? `<p class="mb-0 text-muted small">Size: <span class="fw-semibold">${r.size}</span></p>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    // Add click event for detail view
+    container.querySelectorAll('.review-preview').forEach(card => {
+      card.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        showReviewDetail(id);
+      });
+    });
+  }
+
+  function canManageReview(r) {
+    // Admins can manage any review
+    if (window.currentUserIsAdmin) return true;
+    
+    // Check userId match
+    if (window.currentUserId && r.userId) {
+      if (String(r.userId) === String(window.currentUserId)) return true;
+    }
+    
+    // Fallback: check name match (for seed data without userId)
+    if (window.currentUserName && r.name) {
+      if (r.name === window.currentUserName) return true;
+    }
+    
+    return false;
+  }
+
+  function showReviewDetail(id) {
+    const r = (window.reviews || []).find(rv => rv.id === id);
+    if (!r) return;
+    const detail = document.getElementById('reviewDetail');
+    const canManage = canManageReview(r);
+
+    function renderDetailView(review, { editing = false } = {}) {
+      if (!editing) {
+        return `
+          <div class="card mb-4">
+            <div class="row g-0">
+              ${review.thumbnail ? `
+                <div class="col-md-4">
+                  <img src="${review.thumbnail}" class="img-fluid rounded-start" alt="Review Thumbnail">
+                </div>
+              ` : ''}
+              <div class="col-md-8">
+                <div class="card-body">
+                  <div class="mb-2">${renderStars(review.rating)}</div>
+                  <h5 class="card-title">${review.title}</h5>
+                  <h6 class="fw-bold mb-1">${review.name}</h6>
+                  <p class="text-muted small mb-1">${new Date(review.date).toLocaleDateString()}</p>
+                  ${review.size ? `<p class="mb-1 text-muted small">Size: <span class="fw-semibold">${review.size}</span></p>` : ''}
+                  <p class="card-text">${review.content}</p>
+                  <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-outline-secondary" id="backToList">Back to List</button>
+                    ${canManage ? `<button class="btn btn-outline-dark" id="editReview">Edit</button><button class="btn btn-outline-danger" id="deleteReview">Delete</button>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const ratingOptions = [5,4,3,2,1].map(n => `<option value="${n}" ${Number(review.rating) === n ? 'selected' : ''}>${n} Stars</option>`).join('');
+      const sizeOptions = ['39','40','41','42'].map(s => `<option value="${s}" ${String(review.size) === s ? 'selected' : ''}>${s}</option>`).join('');
+
+      return `
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Edit Review</h5>
+            <form id="editReviewForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Review Title</label>
+                <input type="text" class="form-control" name="title" value="${review.title || ''}">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="content" rows="3">${review.content || ''}</textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Star Rating</label>
+                <select class="form-select" name="rating" required>
+                  <option value="" disabled hidden>Select rating</option>
+                  ${ratingOptions}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Size</label>
+                <select class="form-select" name="size" required>
+                  <option value="" disabled hidden>Select size</option>
+                  ${sizeOptions}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date Added</label>
+                <input type="date" class="form-control" name="date" value="${review.date || ''}">
+              </div>
+              <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-dark">Save</button>
+                <button type="button" class="btn btn-outline-secondary" id="cancelEdit">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function backToList() {
+      detail.classList.add('d-none');
+      document.getElementById('reviewList').classList.remove('d-none');
+    }
+
+    function wireDetailHandlers(reviewId) {
+      document.getElementById('backToList').onclick = backToList;
+
+      const editBtn = document.getElementById('editReview');
+      if (editBtn) {
+        editBtn.onclick = function() {
+          const latest = (window.reviews || []).find(rv => rv.id === reviewId);
+          if (!latest) return;
+          detail.innerHTML = renderDetailView(latest, { editing: true });
+
+          document.getElementById('cancelEdit').onclick = function() {
+            showReviewDetail(reviewId);
+          };
+
+          document.getElementById('editReviewForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+            payload.rating = payload.rating ? parseInt(payload.rating, 10) : payload.rating;
+            if (!payload.size) {
+              alert('Please pick a size');
+              return;
+            }
+            try {
+              const res = await fetch(`/api/reviews/${reviewId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+              });
+              if (res.status === 401) {
+                window.location.href = '/login';
+                return;
+              }
+              if (res.status === 403) {
+                alert('You can only edit your own reviews.');
+                return;
+              }
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert('Error: ' + (err.errors ? err.errors.join('\n') : err.error || 'Unknown error'));
+                return;
+              }
+              await loadAndRenderReviews();
+              showReviewDetail(reviewId);
+            } catch (err) {
+              alert('Error updating review.');
+            }
+          };
+        };
+      }
+
+      const delBtn = document.getElementById('deleteReview');
+      if (delBtn) {
+        delBtn.onclick = async function() {
+          const ok = confirm('Delete this review?');
+          if (!ok) return;
+          try {
+            const res = await fetch(`/api/reviews/${reviewId}`, { 
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            if (res.status === 401) {
+              window.location.href = '/login';
+              return;
+            }
+            if (res.status === 403) {
+              alert('You can only delete your own reviews.');
+              return;
+            }
+            if (!res.ok) {
+              const raw = await res.text().catch(() => '');
+              let message = 'Unable to delete.';
+              try {
+                const parsed = raw ? JSON.parse(raw) : null;
+                if (parsed?.error) message = parsed.error;
+              } catch (_) {
+                // ignore
+              }
+              if (message === 'Unable to delete.' && raw) {
+                message = raw;
+              }
+              alert(`Error (${res.status}): ${message}`);
+              return;
+            }
+            await loadAndRenderReviews();
+            backToList();
+          } catch (err) {
+            alert('Error deleting review.');
+          }
+        };
+      }
+    }
+
+    detail.innerHTML = renderDetailView(r, { editing: false });
+    document.getElementById('reviewList').classList.add('d-none');
+    detail.classList.remove('d-none');
+    wireDetailHandlers(id);
+  }
+
+  // --- Sort, Filter, Search ---
+  function getFilteredSortedReviews() {
+    let list = [...(window.reviews || [])];
+    // Filter
+    const filterVal = document.getElementById('reviewFilter').value;
+    if (filterVal !== 'all') {
+      list = list.filter(r => r.rating === +filterVal);
+    }
+    // Search
+    const searchVal = document.getElementById('reviewSearch').value.trim().toLowerCase();
+    if (searchVal) {
+      list = list.filter(r =>
+        r.title.toLowerCase().includes(searchVal) ||
+        r.summary.toLowerCase().includes(searchVal) ||
+        r.content.toLowerCase().includes(searchVal) ||
+        r.name.toLowerCase().includes(searchVal)
+      );
+    }
+    // Sort
+    const sortVal = document.getElementById('reviewSort').value;
+    if (sortVal === 'date-desc') list.sort((a,b) => b.date.localeCompare(a.date));
+    if (sortVal === 'date-asc') list.sort((a,b) => a.date.localeCompare(b.date));
+    if (sortVal === 'rating-desc') list.sort((a,b) => b.rating - a.rating);
+    if (sortVal === 'rating-asc') list.sort((a,b) => a.rating - b.rating);
+    return list;
+  }
+
+  function updateReviewList() {
+    renderReviewList(getFilteredSortedReviews());
+    document.getElementById('reviewDetail').classList.add('d-none');
+    document.getElementById('reviewList').classList.remove('d-none');
+  }
+
+  // --- Event Listeners ---
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial render
+    updateReviewList();
+    // Controls
+    document.getElementById('reviewSort').addEventListener('change', updateReviewList);
+    document.getElementById('reviewFilter').addEventListener('change', updateReviewList);
+    document.getElementById('reviewSearch').addEventListener('input', updateReviewList);
+    // After page load, always fetch latest reviews from backend
+    loadAndRenderReviews();
+  });
+  </script>
+
+  <script>
+  // Comprehensive validation for the review form
+  document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.getElementById('reviewSubmitForm');
+    if (!reviewForm) return;
+
+    // Helper: create or get error message element
+    function getErrorElem(input) {
+      let err = input.parentElement.querySelector('.invalid-feedback');
+      if (!err) {
+        err = document.createElement('div');
+        err.className = 'invalid-feedback';
+        input.parentElement.appendChild(err);
+      }
+      return err;
+    }
+
+    // Validation rules
+    function validateField(input) {
+      const name = input.previousElementSibling ? input.previousElementSibling.textContent.trim().toLowerCase() : '';
+      const value = input.value.trim();
+      let valid = true, msg = '';
+      if (input.type === 'text' && name === 'review title') {
+        if (!value) { valid = false; msg = 'Title is required.'; }
+        else if (value.length < 5) { valid = false; msg = 'Title must be at least 5 characters.'; }
+      }
+      if (input.tagName === 'TEXTAREA') {
+        if (!value) { valid = false; msg = 'Description is required.'; }
+        else if (value.length < 10) { valid = false; msg = 'Description must be at least 10 characters.'; }
+      }
+      if (input.tagName === 'SELECT' && name === 'star rating') {
+        if (!value) { valid = false; msg = 'Please select a rating.'; }
+      }
+      if (input.tagName === 'SELECT' && name === 'size') {
+        if (!value) { valid = false; msg = 'Please pick a size'; }
+      }
+      if (input.type === 'text' && name === 'your name') {
+        if (!value) { valid = false; msg = 'Name is required.'; }
+        else if (!/^[a-zA-Z\s']+$/.test(value)) { valid = false; msg = 'Name must be letters only.'; }
+      }
+      if (input.type === 'date') {
+        if (!value) { valid = false; msg = 'Date is required.'; }
+        else {
+          const today = new Date();
+          const inputDate = new Date(value);
+          if (inputDate > today) { valid = false; msg = 'Date cannot be in the future.'; }
+        }
+      }
+      if (input.type === 'file') {
+        if (input.files.length > 0) {
+          const file = input.files[0];
+          if (!file.type.startsWith('image/')) {
+            valid = false; msg = 'Only image files are allowed.';
+          }
+        }
+      }
+      // Show/hide error
+      const err = getErrorElem(input);
+      if (!valid) {
+        input.classList.add('is-invalid');
+        err.textContent = msg;
+      } else {
+        input.classList.remove('is-invalid');
+        err.textContent = '';
+      }
+      return valid;
+    }
+
+    // Expose full-form validation for the submit handler
+    window.validateReviewForm = function() {
+      let allValid = true;
+      Array.from(reviewForm.elements).forEach(el => {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+          if (!validateField(el)) allValid = false;
+        }
+      });
+      return allValid;
+    };
+
+    // Live validation on input/change/blur
+    Array.from(reviewForm.elements).forEach(el => {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+        el.addEventListener('input', () => validateField(el));
+        el.addEventListener('change', () => validateField(el));
+        el.addEventListener('blur', () => validateField(el));
+      }
+    });
+  });
+  </script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const form = document.querySelector('form[action="/add-to-cart"]');
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/add-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                Swal.fire({
+                    title: 'Added to Cart!',
+                    text: `Added Size ${data.size} (Qty: ${data.quantity})`,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonColor: '#212529',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Go to Cart',
+                    cancelButtonText: 'Continue Shopping'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/cart';
+                    }
+                });
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Something went wrong!', 'error');
+        }
+    });
+</script>
+  </div> <!-- End prl-wrapper -->
+</body>
+</html>

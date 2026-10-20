@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/css/globals.css" />
+    <link rel="stylesheet" href="/css/styleguide.css" />
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  </head>
+
+  <body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg bg-light border-bottom py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#">Ecommerce</a>
+
+        <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div id="navMenu" class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto ms-4 gap-3">
+                <li class="nav-item"><a class="nav-link" href="/shop">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/shop">Shop</a></li>
+                <li class="nav-item"><a class="nav-link" href="/blogs">Blogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/forum">Forum</a></li>
+                <li class="nav-item"><a class="nav-link" href="/sitemap">Site Map</a></li>
+            </ul>
+
+            <form class="d-flex me-3">
+                <input class="form-control" type="search" placeholder="Search products">
+            </form>
+
+            <a href="/cart" class="me-3 text-dark">
+              <i class="fa-solid fa-bag-shopping fs-5"></i>
+            </a>
+
+            <div class="dropdown">
+              <a href="#" class="text-dark" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-regular fa-user fs-5"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <% if (!user) { %>
+                  <li><a class="dropdown-item" href="/login">Login</a></li>
+                  <li><a class="dropdown-item" href="/register">Register</a></li>
+                <% } else { %>
+                  <li><a class="dropdown-item" href="/account">My Account</a></li>
+                  <% if (user.role === 'admin') { %>
+                  <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
+                  <% } %>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                <% } %>
+              </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- BREADCRUMB -->
+<nav class="bg-light py-2 border-bottom">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/shop">Ecommerce</a></li>
+            <li class="breadcrumb-item"><a href="/cart">Cart</a></li>
+            <li class="breadcrumb-item active">Checkout</li>
+        </ol>
+    </div>
+</nav>
+
+<!-- CHECKOUT CONTENT -->
+<div class="container py-5">
+    <h4 class="fw-bold mb-4">Checkout</h4>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form action="/place-order" method="POST">
+                <!-- Shipping Information -->
+                <div class="card mb-4">
+                    <div class="card-header fw-bold">Shipping Information</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name</label>
+                                <input type="text" name="firstName" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" name="lastName" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="<%= user ? user.email : '' %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <input type="text" name="address" class="form-control" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">State</label>
+                                <input type="text" name="state" class="form-control" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">ZIP Code</label>
+                                <input type="text" name="zip" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" name="phone" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="card mb-4">
+                    <div class="card-header fw-bold">Payment Information</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Card Number</label>
+                            <input type="text" name="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="text" name="expiry" class="form-control" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input type="text" name="cvv" class="form-control" placeholder="123" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Name on Card</label>
+                            <input type="text" name="cardName" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden field for fullname (used by place-order route) -->
+                <input type="hidden" name="fullname" value="<%= user ? user.fullname : '' %>">
+
+                <button type="submit" class="btn btn-dark btn-lg w-100">Place Order</button>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header fw-bold">Order Summary</div>
+                <div class="card-body">
+                    <% if (cartItems && cartItems.length > 0) { %>
+                        <% cartItems.forEach(function(item) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><%= item.product.name %> x <%= item.quantity %></span>
+                                <span>$<%= (item.product.price * item.quantity).toFixed(2) %></span>
+                            </div>
+                            <div class="small text-muted mb-2">
+    <% if (item.size) { %>Size: <strong><%= item.size %></strong><% } %>
+    <% if (item.color) { %> | Color: <span class="text-capitalize"><%= item.color %></span><% } %>
+</div>
+                        <% }); %>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <span>$<%= subtotal %></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax (10%)</span>
+                            <span>$<%= tax %></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping</span>
+                            <span>Free</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total</span>
+                            <span>$<%= total %></span>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted">Your cart is empty</p>
+                        <a href="/shop" class="btn btn-outline-dark w-100">Continue Shopping</a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-light pt-5 border-top">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        <h5 class="fw-bold">Support</h5>
+        <ul class="list-unstyled small text-muted">
+          <li class="mb-2">FAQ</li>
+          <li class="mb-2">Terms of use</li>
+          <li class="mb-2">Privacy Policy</li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h5 class="fw-bold">Company</h5>
+        <ul class="list-unstyled small text-muted">
+          <li class="mb-2">About Us</li>
+          <li class="mb-2">Contact</li>
+          <li class="mb-2">Careers</li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h5 class="fw-bold">Shop</h5>
+        <ul class="list-unstyled small text-muted">
+          <li class="mb-2">My Account</li>
+          <li class="mb-2">Checkout</li>
+          <li class="mb-2">Cart</li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h5 class="fw-bold">Stay Updated</h5>
+        <form class="d-flex">
+          <input type="email" class="form-control form-control-sm" placeholder="Enter Email">
+          <button class="btn btn-dark btn-sm ms-2">Subscribe</button>
+        </form>
+      </div>
+    </div>
+    <hr class="mt-4">
+    <div class="text-center pb-3 small text-muted">
+      © 2023 DevCut. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
