@@ -24,17 +24,17 @@ SportStore is a fully functional, full-stack e-commerce web application focused 
    ```bash
    cd server
 
-Install all required dependencies:
+2. Install all required dependencies:
    npm install
 
-Create a .env file in the server directory and configure your environment variables:
+3. Create a .env file in the server directory and configure your environment variables:
     PORT=3000
     MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/EcommerceStore
     EMAIL_USER=your_email@gmail.com
     EMAIL_PASS=your_google_app_password
 
-Seed the database with sample products, users, and forum threads:
+4. Seed the database with sample products, users, and forum threads:
     node seed.js --clear
 
-Start the local server:
+5. Start the local server:
     node index.js
