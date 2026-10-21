@@ -1,33 +1,40 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/sn4HlWYG)
-Sport_store
-Description
+# SportStore - Full-Stack E-Commerce Platform
 
-Sport_store is a static front-end website for an e-commerce platform focused on sports apparel and footwear.
-It includes multiple modules such as:
+**[Live Demo](https://e-commerce-website-hbvb.onrender.com)**
 
-Discussion Forum
+SportStore is a fully functional, full-stack e-commerce web application focused on sports apparel and footwear. It features a complete front-end user experience backed by a Node.js/Express server and a MongoDB database.
 
-Shopping Cart
+## Features & Modules
+* **Shopping Cart & Orders:** Full cart management and order processing.
+* **User Accounts:** Secure registration, authentication, and profile management.
+* **Product Reviews:** User rating and review system for all products.
+* **Community Forum:** Discussion boards for users to interact and share advice.
+* **Blog:** Content management for sports-related articles and news.
+* **Administration:** Dashboard for managing users, products, and site data.
 
-Blog
+## Tech Stack
+* **Frontend:** HTML, CSS, JavaScript, EJS (Embedded JavaScript templates)
+* **Backend:** Node.js, Express.js
+* **Database:** MongoDB Atlas, Mongoose
+* **Security & Auth:** bcrypt (password hashing)
 
-Product Review & Rating
+## Local Installation
 
-And shared modules:
+1. Clone the repository and navigate to the server folder:
+   ```bash
+   cd server
 
-User account manageemnt
+Install all required dependencies:
+   npm install
 
-Administriation
+Create a .env file in the server directory and configure your environment variables:
+    PORT=3000
+    MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/EcommerceStore
+    EMAIL_USER=your_email@gmail.com
+    EMAIL_PASS=your_google_app_password
 
-Sitemap
+Seed the database with sample products, users, and forum threads:
+    node seed.js --clear
 
-This website represents a fully designed front-end interface with realistic sample data, demonstrating the layout and user experience of each module.
-
-
-
-Required packages to be installed:
-
-- npm install bcrypt
-- npm install nodemailer
-- npm install mongoose
-- node seed.js --clear // before running the server
+Start the local server:
+    node index.js
